@@ -12,6 +12,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.ibm.IoTForWeather.WeatherFunctions.*;
 
@@ -44,13 +45,22 @@ public class DataReciever implements WeatherMQTTHandler {
 		/*
 		 * Get latitude, longitude, other data from device
 		 */
+		JSONObject obj = new JSONObject(payload);
+		double latitude = Double.parseDouble(obj.getString("lat"));
+		double longitude = Double.parseDouble(obj.getString("lon"));
 		
 		//TODO
 		
 		/*
 		 * Pass this data to insights for weather to pass for analysis
 		 */
-		InsightsForWeather.getCurrentObservations(latitude, longitude);
+		JSONObject weatherData = null;
+		try {
+			weatherData = InsightsForWeather.getCurrentObservations(latitude, longitude);
+		} catch (Exception e) {
+			System.out.println("Error making weather API call with new data");
+			e.printStackTrace();
+		}
 		
 		/*
 		 * Take the received insight from weather analytics and

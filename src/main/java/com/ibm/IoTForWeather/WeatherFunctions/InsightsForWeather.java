@@ -6,6 +6,8 @@ import org.apache.http.impl.client.*;
 import org.apache.http.client.methods.*;
 import org.apache.http.*;
 import java.io.IOException;
+import java.net.URLEncoder;
+
 import com.ibm.IoTForWeather.Utilities.*;
 
 public abstract class InsightsForWeather {
@@ -48,9 +50,10 @@ public abstract class InsightsForWeather {
 	public static JSONObject getCurrentObservations(double latitude, double longitude) throws IllegalStateException, IOException {
 		
 		String currentObservationsURL = InsightsForWeather.WEATHER_API_URL + ":443"
-			+ "/api/weather/" + InsightsForWeather.API_VERSION_NUMBER + 
-			"/observations/current?units=m&geocode=" + latitude + "%2C" + longitude
-			+ "&language=en-US";
+			+ "/api/weather/" + InsightsForWeather.API_VERSION_NUMBER
+			+ "/observations/current?units=" + URLEncoder.encode("e", "UTF-8")
+			+ "&geocode=" + URLEncoder.encode(String.valueOf(latitude) + "," + String.valueOf(longitude), "UTF-8")
+			+ "&language=" + URLEncoder.encode("en-US", "UTF-8");
 
 		System.out.println(currentObservationsURL);
 

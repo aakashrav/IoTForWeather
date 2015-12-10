@@ -34,7 +34,7 @@ public class DataReciever implements WeatherMQTTHandler {
 	}
 
 	/**
-	 * When new data from the device is recieed, use it to call
+	 * When new data from the device is recieved, use it to call
 	 * the weather services API and gain insight.
 	 */
 	public void messageArrivedCallback(String payload) {
@@ -46,8 +46,11 @@ public class DataReciever implements WeatherMQTTHandler {
 		 * Get latitude, longitude, other data from device
 		 */
 		JSONObject obj = new JSONObject(payload);
-		double latitude = Double.parseDouble(obj.getString("lat"));
-		double longitude = Double.parseDouble(obj.getString("lon"));
+//		double latitude = Double.parseDouble(obj.getString("lat"));
+//		double longitude = Double.parseDouble(obj.getString("lon"));
+		double latitude = obj.getDouble("lat");
+		double longitude = obj.getDouble("lon");
+		String deviceMAC = obj.getString("mac");
 		
 		//TODO
 		
@@ -67,9 +70,16 @@ public class DataReciever implements WeatherMQTTHandler {
 		 * send it as a command to the device
 		 */
 		//TODO:
-//		publish(...)
+		//Publish command to one specific device
+		//iot-2/type/<type-id>/id/<device-id>/cmd/<cmd-id>/fmt/<format-id>
+		publish("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
+				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
+				+ "/fmt/json", weatherData.toString(), false, 0);
 		
+		System.out.println("I'm Done!");
+		System.out.println(weatherData);
 	}
+	
 	
 	/**
 	 * Received one subscribed message

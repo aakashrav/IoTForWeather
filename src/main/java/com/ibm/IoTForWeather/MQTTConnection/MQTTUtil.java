@@ -29,7 +29,9 @@ public abstract class MQTTUtil {
 		 * @exception IOException
 		 */
 		public static void setMQTTProperties(String filePath) {
-
+			
+			configurationProperties = new Properties();
+			
 			try {
 				InputStream in = new BufferedInputStream(new FileInputStream(
 						filePath));

@@ -1,9 +1,11 @@
 package com.ibm.IoTForWeather.MQTTConnection;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -14,9 +16,11 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.ibm.IoTForWeather.Utilities.DeviceCommand;
+import com.ibm.IoTForWeather.Utilities.JSONUtils;
 import com.ibm.IoTForWeather.WeatherFunctions.*;
 
-public class DataReciever implements WeatherMQTTHandler {
+public class DataHandler implements WeatherMQTTHandler {
 	
 	private MqttClient client = null;
 	private final static String DEFAULT_TCP_PORT = "1883";
@@ -45,15 +49,18 @@ public class DataReciever implements WeatherMQTTHandler {
 		/*
 		 * Get latitude, longitude, other data from device
 		 */
-		JSONObject obj = new JSONObject(payload);
-//		double latitude = Double.parseDouble(obj.getString("lat"));
-//		double longitude = Double.parseDouble(obj.getString("lon"));
+		JSONObject wrapper_obj = new JSONObject(payload);
+		JSONObject obj = wrapper_obj.getJSONObject("d");
+		
 		double latitude = obj.getDouble("lat");
-		double longitude = obj.getDouble("lon");
-		String deviceMAC = obj.getString("mac");
+		double longitude = obj.getDouble("lng");
+		String deviceMAC = obj.getString("name");
 		
-		//TODO
-		
+		/*
+		 * Store this data for display and monitoring
+		 */
+		JSONUtils.addNewUpdateToJSONArray("device_data.json",obj);
+
 		/*
 		 * Pass this data to insights for weather to pass for analysis
 		 */
@@ -64,20 +71,45 @@ public class DataReciever implements WeatherMQTTHandler {
 			System.out.println("Error making weather API call with new data");
 			e.printStackTrace();
 		}
-		
 		/*
 		 * Take the received insight from weather analytics and
-		 * send it as a command to the device
+		 * send it as a command to the device. First we preprocess
+		 * and obtain the important parts of the insight.
 		 */
-		//TODO:
-		//Publish command to one specific device
+		
+		//The 3 pieces of insight we require: rain, snow, and temp
+		double rain = weatherData.getJSONObject("observation")
+				.getJSONObject("imperial")
+				.getDouble("precip_1hour");
+		double snow = weatherData.getJSONObject("observation")
+				.getJSONObject("imperial")
+				.getDouble("snow_1hour");
+		double temp = weatherData.getJSONObject("observation")
+				.getJSONObject("imperial")
+				.getDouble("temp");
+		
+		DeviceCommand newUpdate = new DeviceCommand(rain, snow, temp);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		String rawJSONCommand = "";
+		try {
+			rawJSONCommand = mapper.writeValueAsString(newUpdate);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		
+		System.out.println(rawJSONCommand);
+		System.out.println("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
+				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
+				+ "/fmt/json");
+		
 		//iot-2/type/<type-id>/id/<device-id>/cmd/<cmd-id>/fmt/<format-id>
 		publish("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
 				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
-				+ "/fmt/json", weatherData.toString(), false, 0);
+				+ "/fmt/json", rawJSONCommand, false, 0);
 		
-		System.out.println("I'm Done!");
-		System.out.println(weatherData);
+		System.out.println("Finished sending command!");
 	}
 	
 	
@@ -91,8 +123,6 @@ public class DataReciever implements WeatherMQTTHandler {
 		Pattern pattern = Pattern.compile("iot-2/type/"
 				+ MQTTUtil.getDefaultDeviceType() + "/id/(.+)/evt/(.+)"
 				+ "/fmt/json");
-		
-		//TODO v2 implement callback for system events
 
 		Matcher matcher = pattern.matcher(topic);
 		if (matcher.matches()) {
@@ -109,7 +139,7 @@ public class DataReciever implements WeatherMQTTHandler {
 		if (!isMqttConnected()) {
 			String connectionUri = null;
 			
-			connectionUri = "ssl://" + serverHost + ":" + DataReciever.DEFAULT_SSL_PORT;
+			connectionUri = "ssl://" + serverHost + ":" + DataHandler.DEFAULT_SSL_PORT;
 
 			if (client != null) {
 				try {
@@ -231,13 +261,16 @@ public class DataReciever implements WeatherMQTTHandler {
 			// set quality of service
 			mqttMsg.setQos(qos);
 			try {
+				System.out.println("About to send!");
 				client.publish(topic, mqttMsg);
+				System.out.println("Finished sending!");
 			} catch (MqttPersistenceException e) {
 				e.printStackTrace();
 			} catch (MqttException e) {
 				e.printStackTrace();
 			}
 		} else {
+			System.out.println("Connection lost!");
 			connectionLost(null);
 		}
 	}

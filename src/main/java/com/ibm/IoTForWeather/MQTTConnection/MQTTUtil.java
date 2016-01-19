@@ -10,12 +10,12 @@ public abstract class MQTTUtil {
 		private final static String SERVER_SUFFIX = ".messaging.internetofthings.ibmcloud.com";
 		private final static String DEFAULT_DEVICE_TYPE="ARM";
 		private final static String DEFAULT_EVENT_ID = "status";
-		private final static String DEFAULT_CMD_ID = "cid";
+		private final static String DEFAULT_CMD_ID = "weather";
 		
 		private static final String org="2uwqwc";
-		private static final String appid="WatsonFuelTest";
-		private static final String key="a-2uwqwc-fclbgnhfmb";
-		private static final String token="wzm6bwB5ikXwuvYqZL";
+		private static final String appid="WeatherIoT";
+		private static final String key="a-2uwqwc-gnumvxzrqf";
+		private static final String token="6@T191EadC&1i&Xu*0";
 		
 		
 		public static String getServerSuffix() {

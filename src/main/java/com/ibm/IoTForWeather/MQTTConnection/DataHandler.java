@@ -100,14 +100,17 @@ public class DataHandler implements WeatherMQTTHandler {
 		} 
 		
 		System.out.println(rawJSONCommand);
-		System.out.println("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
-				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
-				+ "/fmt/json");
 		
 		//iot-2/type/<type-id>/id/<device-id>/cmd/<cmd-id>/fmt/<format-id>
 		publish("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
 				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
 				+ "/fmt/json", rawJSONCommand, false, 0);
+		System.out.println("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
+				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
+				+ "/fmt/json");
+//		//iot-2/type/<type-id>/id/<device-id>/cmd/<cmd-id>/fmt/<format-id>
+//		publish("iot-2/cmd/" + MQTTUtil.getDefaultCmdId()
+//				+ "/fmt/json", rawJSONCommand, false, 0);
 		
 		System.out.println("Finished sending command!");
 	}

@@ -2,6 +2,7 @@ package com.ibm.IoTForWeather.MQTTConnection;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
+import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,14 +25,15 @@ import com.ibm.IoTForWeather.WeatherFunctions.*;
 public class DataHandler implements WeatherMQTTHandler {
 	
 	private MqttClient client = null;
+	private MqttClient publishClient = null;
 	private final static String DEFAULT_TCP_PORT = "1883";
 	private final static String DEFAULT_SSL_PORT = "8883";
 	
 	public void run() {
 		
 		this.connect(MQTTUtil.getOrg() + MQTTUtil.getServerSuffix(), 
-				"a:" + MQTTUtil.getOrg() + ":" + MQTTUtil.getAppid(),
-				MQTTUtil.getKey(), MQTTUtil.getToken(), true);
+				"a:" + MQTTUtil.getOrg() + ":" + MQTTUtil.getSubscribeAppid(),
+				MQTTUtil.getSubscribeKey(), MQTTUtil.getSubscribeToken(), true);
 		
 		/* process requests indefinitely, therefore need to thread this */
 		this.subscribe("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
@@ -100,17 +103,24 @@ public class DataHandler implements WeatherMQTTHandler {
 		} 
 		
 		System.out.println(rawJSONCommand);
+
+		/* Version 1 without MQTT Application client */
+		
+		connectPublishClient(MQTTUtil.getOrg() + MQTTUtil.getServerSuffix(), 
+		"a:" + MQTTUtil.getOrg() + ":" + MQTTUtil.getPublishAppid(),
+		MQTTUtil.getPublishKey(), MQTTUtil.getPublishToken(), true);
+		
+		// Check to make sure publish client has been created properly
+		System.out.println(publishClient);
 		
 		//iot-2/type/<type-id>/id/<device-id>/cmd/<cmd-id>/fmt/<format-id>
 		publish("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
 				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
 				+ "/fmt/json", rawJSONCommand, false, 0);
+		
 		System.out.println("iot-2/type/" + MQTTUtil.getDefaultDeviceType()
 				+ "/id/" + deviceMAC + "/cmd/" + MQTTUtil.getDefaultCmdId()
 				+ "/fmt/json");
-//		//iot-2/type/<type-id>/id/<device-id>/cmd/<cmd-id>/fmt/<format-id>
-//		publish("iot-2/cmd/" + MQTTUtil.getDefaultCmdId()
-//				+ "/fmt/json", rawJSONCommand, false, 0);
 		
 		System.out.println("Finished sending command!");
 	}
@@ -136,6 +146,56 @@ public class DataHandler implements WeatherMQTTHandler {
 		}
 	}
 	
+	public void connectPublishClient(String serverHost, String clientId, String authmethod,
+		String authtoken, boolean isSSL) {
+			
+			// check if client is already connected
+			if (!isMqttPublishConnected()) {
+				String connectionUri = null;
+				
+				connectionUri = "ssl://" + serverHost + ":" + DataHandler.DEFAULT_SSL_PORT;
+
+				if (publishClient != null) {
+					try {
+						publishClient.disconnect();
+					} catch (MqttException e) {
+						System.out.println("not able to disconnect: mqtthandler");
+						e.printStackTrace();
+					}
+					publishClient = null;
+				}
+
+				try {
+					publishClient = new MqttClient(connectionUri, clientId);
+				} catch (MqttException e) {
+					e.printStackTrace();
+				}
+
+				publishClient.setCallback(this);
+
+				// create MqttConnectOptions and set the clean session flag
+				MqttConnectOptions options = new MqttConnectOptions();
+				options.setCleanSession(true);
+
+				options.setUserName(authmethod);
+				options.setPassword(authtoken.toCharArray());
+				
+				java.util.Properties sslClientProps = new java.util.Properties();
+				sslClientProps.setProperty("com.ibm.ssl.protocol", "TLSv1.2");
+				options.setSSLProperties(sslClientProps);
+
+				try {
+					// connect
+					publishClient.connect(options);
+					System.out.println("Connected to " + connectionUri);
+				} catch (MqttException e) {
+					System.out.println("ERROR CONNECTING!");
+					e.printStackTrace();
+				}
+
+			}
+			
+		}
 	public void connect(String serverHost, String clientId, String authmethod,
 			String authtoken, boolean isSSL) {
 		// check if client is already connected
@@ -256,16 +316,16 @@ public class DataHandler implements WeatherMQTTHandler {
 	 */
 	public void publish(String topic, String message, boolean retained, int qos) {
 		// check if client is connected
-		if (isMqttConnected()) {
+		if (isMqttPublishConnected()) {
 			// create a new MqttMessage from the message string
 			MqttMessage mqttMsg = new MqttMessage(message.getBytes());
 			// set retained flag
-			mqttMsg.setRetained(retained);
+			mqttMsg.setRetained(false);
 			// set quality of service
 			mqttMsg.setQos(qos);
 			try {
 				System.out.println("About to send!");
-				client.publish(topic, mqttMsg);
+				publishClient.publish(topic, mqttMsg);
 				System.out.println("Finished sending!");
 			} catch (MqttPersistenceException e) {
 				e.printStackTrace();
@@ -293,6 +353,19 @@ public class DataHandler implements WeatherMQTTHandler {
 			// swallowing the exception as it means the client is not connected
 		}
 		return connected;
+	}
+	
+	private boolean isMqttPublishConnected() {
+		boolean connected = false;
+		try {
+			if ((publishClient != null) && (publishClient.isConnected())) {
+				connected = true;
+			}
+		} catch (Exception e) {
+				// swallowing the exception as it means the client is not connected
+			}
+		return connected;
+			
 	}
 
 

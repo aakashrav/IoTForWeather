@@ -1,0 +1,7 @@
+An extensive sample application that showcases various technologies: IBM IoT Foundation's MQTT Broker, IBM Insights for Weather, IBM Bluemix, and Java Spring MVC Framework.
+
+This application gets insight about the location of a connected device using IBM Bluemix's IoT Foundation MQTT Broker: https://internetofthings.ibmcloud.com/
+
+It then connects to the IBM InsightsForWeather service: http://www.ibm.com/analytics/us/en/business/weather-insight.html to access weather information at the location of the device. 
+
+The application then passes this information back to the device in the form of a JSON Object, again using IBM MQTT Broker - thus enabling the device's owner to to gain important information regarding future weather hazards at that location, even if he/she is mobile.

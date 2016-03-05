@@ -1,2 +1,3 @@
 .DS_Store
 src/test/java/com/ibm/IoTForWeather/*.java
+/target/classes/*.class

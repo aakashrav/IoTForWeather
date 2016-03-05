@@ -15,9 +15,6 @@ import com.ibm.IoTForWeather.Utilities.*;
 
 public abstract class InsightsForWeather {
 	
-	// private static String WEATHER_API_URL;
-	// private static String WEATHER_API_USERNAME;
-	// private static String WEATHER_API_PASSWORD;
 	private static String WEATHER_API_URL = "https://39e101f9-3097-4c54-bb88-4dbb89a11f74:Hh0xOQlQGT@twcservice.mybluemix.net";
 	private static String WEATHER_API_USERNAME = "39e101f9-3097-4c54-bb88-4dbb89a11f74";
 	private static String WEATHER_API_PASSWORD = "Hh0xOQlQGT";
@@ -70,8 +67,6 @@ public abstract class InsightsForWeather {
         httpget.addHeader("Authorization", "Basic " + new BASE64Encoder().encode(credentials.getBytes()));
        
         response = httpclient.execute(httpget);
-//        System.out.println(JSONUtils.getObjectFromStream(response.getEntity()
-//        		.getContent()));
         return JSONUtils.getObjectFromStream(response.getEntity()
                         .getContent());
 		

@@ -13,9 +13,16 @@ public abstract class MQTTUtil {
 		private final static String DEFAULT_CMD_ID = "weather";
 		
 		private static final String org="2uwqwc";
-		private static final String appid="WeatherIoT";
-		private static final String key="a-2uwqwc-gnumvxzrqf";
-		private static final String token="6@T191EadC&1i&Xu*0";
+		
+		private static final String subscribe_appid="WeatherIoT";
+		private static final String subscribe_key="a-2uwqwc-gnumvxzrqf";
+		private static final String subscribe_token="6@T191EadC&1i&Xu*0";
+		
+		private static final String publish_appid = "WeatherIoT";
+		private static final String publish_key = "a-2uwqwc-wuatrq2bo0";
+		private static final String publish_token = "7IMZreCaUq+ogp1XNw";
+		
+				
 		
 		
 		public static String getServerSuffix() {
@@ -38,16 +45,28 @@ public abstract class MQTTUtil {
 			return org;
 		}
 
-		public static String getAppid() {
-			return appid;
+		public static String getSubscribeAppid() {
+			return subscribe_appid;
+		}
+		
+		public static String getPublishAppid() {
+			return publish_appid;
 		}
 
-		public static String getKey() {
-			return key;
+		public static String getSubscribeKey() {
+			return subscribe_key;
+		}
+		
+		public static String getPublishKey() {
+			return publish_key;
 		}
 
-		public static String getToken() {
-			return token;
+		public static String getSubscribeToken() {
+			return subscribe_token;
+		}
+		
+		public static String getPublishToken() {
+			return publish_token;
 		}
 		
 		
